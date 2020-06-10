@@ -1,0 +1,317 @@
+# Required                                                                              
+[[plugins]]
+repo = 'Shougo/dein.vim'
+
+[[plugins]]
+repo = 'Shougo/vimproc.vim'
+hook_post_update = '''
+  if has('mac')
+    let cmd = 'make -f make_mac.mak'
+  elseif executable('gmake')
+    let cmd = 'gmake'
+  else
+    let cmd = 'make'
+  endif
+
+  let g:dein#plugin.build = cmd
+'''
+
+
+[[plugins]]
+repo = 'Shougo/denite.nvim'
+hook_add = '''
+call denite#custom#option('default', 'direction', 'top')
+nmap <silnet> <C-u><C-i> :<C-u>Denite file_mru<CR>
+nmap <silent> <C-u><C-j> :<C-u>Denite file/rec<CR>
+nmap <silent> <C-l> :<C-u>Denite line<CR>
+" Define mappings
+autocmd FileType denite call s:denite_my_settings()
+function! s:denite_my_settings() abort
+  nnoremap <silent><buffer><expr> <CR>
+  \ denite#do_map('do_action')
+  nnoremap <silent><buffer><expr> d
+  \ denite#do_map('do_action', 'delete')
+  nnoremap <silent><buffer><expr> p
+  \ denite#do_map('do_action', 'preview')
+  nnoremap <silent><buffer><expr> q
+  \ denite#do_map('quit')
+  nnoremap <silent><buffer><expr> i
+  \ denite#do_map('open_filter_buffer')
+  nnoremap <silent><buffer><expr> <Space>
+  \ denite#do_map('toggle_select').'j'
+endfunction
+
+autocmd FileType denite-filter call s:denite_filter_my_settings()
+function! s:denite_filter_my_settings() abort
+  imap <silent><buffer> <C-o> <Plug>(denite_filter_quit)
+endfunction
+
+" Change file/rec command.
+call denite#custom#var('file/rec', 'command',
+\ ['ag', '--follow', '--nocolor', '--nogroup', '-g', ''])
+" For ripgrep
+" Note: It is slower than ag
+call denite#custom#var('file/rec', 'command',
+\ ['rg', '--files', '--glob', '!.git'])
+" For Pt(the platinum searcher)
+" NOTE: It also supports windows.
+call denite#custom#var('file/rec', 'command',
+\ ['pt', '--follow', '--nocolor', '--nogroup',
+\  (has('win32') ? '-g:' : '-g='), ''])
+" For python script scantree.py
+" Read bellow on this file to learn more about scantree.py
+call denite#custom#var('file/rec', 'command',
+\ ['scantree.py', '--path', ':directory'])
+
+" Change matchers.
+call denite#custom#source(
+\ 'file_mru', 'matchers', ['matcher/fuzzy', 'matcher/project_files'])
+call denite#custom#source(
+\ 'file/rec', 'matchers', ['matcher/cpsm'])
+
+" Change sorters.
+call denite#custom#source(
+\ 'file/rec', 'sorters', ['sorter/sublime'])
+
+" Change default action.
+call denite#custom#kind('file', 'default_action', 'split')
+
+" Add custom menus
+let s:menus = {}
+
+let s:menus.zsh = {
+	\ 'description': 'Edit your import zsh configuration'
+	\ }
+let s:menus.zsh.file_candidates = [
+	\ ['zshrc', '~/.config/zsh/.zshrc'],
+	\ ['zshenv', '~/.zshenv'],
+	\ ]
+
+let s:menus.my_commands = {
+	\ 'description': 'Example commands'
+	\ }
+let s:menus.my_commands.command_candidates = [
+	\ ['Split the window', 'vnew'],
+	\ ['Open zsh menu', 'Denite menu:zsh'],
+	\ ['Format code', 'FormatCode', 'go,python'],
+	\ ]
+
+call denite#custom#var('menu', 'menus', s:menus)
+
+" Ag command on grep source
+call denite#custom#var('grep', {
+	\ 'command': ['ag'],
+	\ 'default_opts': ['-i', '--vimgrep'],
+	\ 'recursive_opts': [],
+	\ 'pattern_opt': [],
+	\ 'separator': ['--'],
+	\ 'final_opts': [],
+	\ })
+
+" Ack command on grep source
+call denite#custom#var('grep', {
+	\ 'command': ['ack'],
+	\ 'default_opts': [
+	\   '--ackrc', $HOME.'/.ackrc', '-H', '-i',
+	\   '--nopager', '--nocolor', '--nogroup', '--column'
+	\ ],
+	\ 'recursive_opts': [],
+	\ 'pattern_opt': ['--match'],
+	\ 'separator': ['--'],
+	\ 'final_opts': [],
+	\ })
+
+" Ripgrep command on grep source
+call denite#custom#var('grep', {
+	\ 'command': ['rg'],
+	\ 'default_opts': ['-i', '--vimgrep', '--no-heading'],
+	\ 'recursive_opts': [],
+	\ 'pattern_opt': ['--regexp'],
+	\ 'separator': ['--'],
+	\ 'final_opts': [],
+	\ })
+
+" Pt command on grep source
+call denite#custom#var('grep', {
+	\ 'command': ['pt'],
+	\ 'default_opts': [
+	\   '-i', '--nogroup', '--nocolor', '--smart-case'],
+	\ 'recursive_opts': [],
+	\ 'pattern_opt': [],
+	\ 'separator': ['--'],
+	\ 'final_opts': [],
+	\ })
+
+" jvgrep command on grep source
+call denite#custom#var('grep', {
+	\ 'command': ['jvgrep'],
+	\ 'default_opts': ['-i'],
+	\ 'recursive_opts': ['-R'],
+	\ 'pattern_opt': [],
+	\ 'separator': [],
+	\ 'final_opts': [],
+	\ })
+
+" Specify multiple paths in grep source
+"call denite#start([{'name': 'grep',
+"      \ 'args': [['a.vim', 'b.vim'], '', 'pattern']}])
+
+" Define alias
+call denite#custom#alias('source', 'file/rec/git', 'file/rec')
+call denite#custom#var('file/rec/git', 'command',
+      \ ['git', 'ls-files', '-co', '--exclude-standard'])
+
+call denite#custom#alias('source', 'file/rec/py', 'file/rec')
+call denite#custom#var('file/rec/py', 'command',
+\ ['scantree.py', '--path', ':directory'])
+
+" Change ignore_globs
+call denite#custom#filter('matcher/ignore_globs', 'ignore_globs',
+      \ [ '.git/', '.ropeproject/', '__pycache__/',
+      \   'venv/', 'images/', '*.min.*', 'img/', 'fonts/'])
+
+" Custom action
+" Note: lambda function is not supported in Vim8.
+call denite#custom#action('file', 'test',
+      \ {context -> execute('let g:foo = 1')})
+call denite#custom#action('file', 'test2',
+      \ {context -> denite#do_action(
+      \  context, 'open', context['targets'])})
+" Source specific action
+call denite#custom#action('source/file', 'test',
+      \ {context -> execute('let g:bar = 1')})
+'''
+
+hook_post_source = '''
+call denite#custom#source(
+  \ 'file_rec', 'vars', {
+  \    'command': [
+  \        'pt', '--follow', '--nocolor', '--nogroup',
+  \        '--hidden', '-g', ''
+  \    ]})
+'''
+
+[[plugins]]
+repo = 'Shougo/neomru.vim'
+
+# Use git with vim
+[[plugins]]
+repo = 'tpope/vim-fugitive'
+hook_post_source = '''
+augroup = 'fugitive'
+'''
+
+[[plugins]]
+repo = 'airblade/vim-gitgutter'
+
+# vim ui
+[[plugins]]
+repo = 'itchyny/lightline.vim'
+hook_add = '''
+    let g:lightline = {'colorscheme': 'Tomorrow'}
+'''
+
+# Toml
+[[plugins]]
+repo  = 'cespare/vim-toml'
+
+[[plugins]]
+repo = 'tomasr/molokai'
+
+# Syntastic settings
+[[plugins]]
+repo = 'scrooloose/syntastic'
+hook_add = ''' 
+let g:syntastic_always_populate_loc_list = 1 
+let g:syntastic_auto_loc_list = 1 
+let g:syntastic_check_on_open = 1 
+let g:syntastic_check_on_wq = 0 
+
+let g:syntastic_mode_map = { 
+    \ 'mode': 'passive',
+    \ 'active_filetypes': ['python']
+    \}  
+'''
+
+[[plugins]]
+repo = 'jiangmiao/auto-pairs'
+
+[[plugins]]
+repo = 'zchee/deoplete-jedi'
+hook_add = '''
+let g:deoplete#sources#jedi#show_docstring = 0
+let g:deoplete#sources#jedi#python_path = "/usr/local/bin/python"
+'''
+
+[[plugins]]
+repo = 'vim-airline/vim-airline'
+hook_add = '''
+let g:airline#extensions#tabline#buffer_idx_mode = 1
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#hunks#enabled = 1
+let g:airline_theme = 'papercolor'
+let g:airline#extensions#tabline#buffer_idx_format = {
+  	\ '0': '0 ',
+  	\ '1': '1 ',
+  	\ '2': '2 ',
+  	\ '3': '3 ',
+  	\ '4': '4 ',
+  	\ '5': '5 ',
+  	\ '6': '6 ',
+  	\ '7': '7 ',
+  	\ '8': '8 ',
+  	\ '9': '9 '
+  	\}
+nmap tp <Plug>AirlineSelectPrevTab
+nmap tn <Plug>AirlineSelectNextTab
+'''
+
+[[plugins]]
+repo = 'vim-airline/vim-airline-themes'
+hook_add = '''
+let g:airline_theme='dark'
+'''
+
+[[plugins]]
+repo = 'w0rp/ale'
+hook_add = '''
+  " error view mark 
+  let g:ale_sign_error = '⨉'
+  let g:ale_sign_warning = '⚠'
+  '
+  " Message format displayed when the cursor is placed on the error line 
+  let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+
+  " Always show error display field
+  let g:ale_sign_column_always = 1
+
+  " Run lint when opening a file
+  let g:ale_lint_on_enter = 1
+  j
+  " Run lint when saving file
+  let g:ale_lint_on_save = 1
+  
+  " Do not lint while editing
+  let g:ale_lint_on_text_changed = 'never'
+  
+  " Do not show lint results in location list and QuickFix
+  let g:ale_set_loclist = 0
+  let g:ale_set_quickfix = 0
+  let g:ale_open_list = 0
+  let g:ale_keep_list_window_open = 0
+  
+  " Enable linter
+  let g:ale_linters = {
+  \   'python': ['flake8'],
+  \}
+  
+  " ALE prefix
+  nmap [ale] <Nop>
+  map <C-k> [ale]
+
+  " Jump to error line
+  " "nmap <silent> [ale]<C-P> <Plug>(ale_previous)
+  nmap <silent> [ale]<C-N> <Plug>(ale_next)
+'''
+
+

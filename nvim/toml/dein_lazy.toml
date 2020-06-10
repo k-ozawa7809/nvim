@@ -1,0 +1,30 @@
+[[plugins]]
+repo = 'Shougo/deoplete.nvim'
+on_event = 'InsertEnter'
+hook_add = '''
+  let g:deoplete#enable_at_startup = 1
+  inoremap <expr><Tab> pumvisible() ? "\<DOWN>" : "\<Tab>"
+  inoremap <expr><S-Tab> pumvisible() ? "\<UP>" : "\<S-Tab>"
+'''
+
+# Tree view with NEEDTree
+[[plugins]]
+repo = 'scrooloose/nerdtree'
+
+# Vim Shell
+[[plugins]]
+repo = 'Shougo/vimshell'
+hook_post_update = '''
+  rev = '3787e5'
+'''
+
+[[plugins]]
+repo = 'jmcantrell/vim-virtualenv'
+
+[[plugins]]
+repo = 'alvan/vim-closetag'
+hook_add = '''
+let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.vue'
+let g:closetag_xhtml_filenames = '*.xhtml,*.jsx'
+'''
+
